@@ -1,0 +1,316 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <div class="app-bar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" />
+          <path d="M21 9 18 18 9 23 14 14Z" />
+        </svg>
+        <div>
+          <ion-title class="brand-name">{{ appName }}</ion-title>
+          <span class="brand-campus">{{ campus }}</span>
+        </div>
+      </div>
+      <span class="offline-label">Offline map</span>
+    </div>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <main class="page">
+    <section class="search-area" aria-labelledby="place-search-label">
+      <h1 id="place-search-label">Where are you headed?</h1>
+      <ion-searchbar
+        aria-labelledby="place-search-label"
+        placeholder="Building, facility, or map number"
+        showClearButton="always"
+        [value]="searchText()"
+        [debounce]="150"
+        (ionInput)="searchPlaces($event.detail.value)"
+      ></ion-searchbar>
+    </section>
+
+    <div class="student-bar">
+  <p>{{ student()?.full_name || 'Explore as a guest' }}</p>
+
+  <button
+    type="button"
+    class="map-action"
+    (click)="openStudentForm()"
+  >
+    Student profile
+  </button>
+</div>
+
+<label class="haptics-setting">
+  <input
+    #vibration
+    type="checkbox"
+    [checked]="hapticsEnabled()"
+    (change)="setHaptics(vibration.checked)"
+  />
+  Vibrate when selecting a place
+</label>
+
+@if (showStudentForm()) {
+  <section
+    id="student-form"
+    class="student-form"
+    tabindex="-1"
+    aria-labelledby="student-heading"
+  >
+    <h2 id="student-heading">Set up your student profile</h2>
+
+    <p>
+      We check your ID, name, course and year
+      against the class directory.
+    </p>
+
+    <form
+      (ngSubmit)="checkStudent()"
+      [attr.aria-busy]="studentBusy()"
+    >
+      <div class="student-fields">
+        <ion-input
+          label="Full name"
+          labelPlacement="stacked"
+          fill="outline"
+          name="fullName"
+          [(ngModel)]="fullName"
+          maxlength="100"
+          [disabled]="studentBusy()"
+          (ngModelChange)="studentDetailsChanged()"
+        ></ion-input>
+
+        <ion-input
+          label="Course"
+          labelPlacement="stacked"
+          fill="outline"
+          name="course"
+          [(ngModel)]="course"
+          maxlength="60"
+          [disabled]="studentBusy()"
+          (ngModelChange)="studentDetailsChanged()"
+        ></ion-input>
+
+        <ion-select
+          label="Year level"
+          labelPlacement="stacked"
+          fill="outline"
+          placeholder="Choose year"
+          name="yearLevel"
+          [(ngModel)]="yearLevel"
+          [disabled]="studentBusy()"
+          (ngModelChange)="studentDetailsChanged()"
+        >
+          <ion-select-option [value]="1">
+            1st year
+          </ion-select-option>
+          <ion-select-option [value]="2">
+            2nd year
+          </ion-select-option>
+          <ion-select-option [value]="3">
+            3rd year
+          </ion-select-option>
+          <ion-select-option [value]="4">
+            4th year
+          </ion-select-option>
+          <ion-select-option [value]="5">
+            5th year
+          </ion-select-option>
+          <ion-select-option [value]="6">
+            6th year
+          </ion-select-option>
+        </ion-select>
+
+        <ion-input
+          label="Section"
+          labelPlacement="stacked"
+          fill="outline"
+          name="section"
+          [(ngModel)]="section"
+          maxlength="20"
+          [disabled]="studentBusy()"
+          (ngModelChange)="studentDetailsChanged()"
+        ></ion-input>
+
+        <ion-input
+          label="Student ID number"
+          labelPlacement="stacked"
+          fill="outline"
+          name="studentNo"
+          [(ngModel)]="studentNo"
+          maxlength="30"
+          [disabled]="studentBusy()"
+          (ngModelChange)="studentDetailsChanged()"
+        ></ion-input>
+      </div>
+
+      <p>
+        Section stays on this device because the API
+        has no section field. This is a shared student
+        directory, not a secure login. GPS is never sent to it.
+      </p>
+
+      <p role="status">{{ studentMessage() }}</p>
+
+      <div class="student-actions">
+        @if (canRegister()) {
+          <button
+            type="button"
+            class="map-action primary-action"
+            [disabled]="studentBusy()"
+            (click)="postStudent()"
+          >
+            Create profile
+          </button>
+        } @else {
+          <button
+            type="submit"
+            class="map-action primary-action"
+            [disabled]="studentBusy()"
+          >
+            {{ studentBusy() ? 'Checking...' : 'Check details' }}
+          </button>
+        }
+
+        <button
+          type="button"
+          class="map-action"
+          (click)="closeStudentForm()"
+        >
+          Not now
+        </button>
+      </div>
+    </form>
+  </section>
+}
+
+@if (!showStudentForm() && studentMessage()) {
+  <p class="student-feedback" role="status">
+    {{ studentMessage() }}
+  </p>
+}
+
+@if (storageMessage()) {
+  <p class="student-feedback" role="status">
+    {{ storageMessage() }}
+  </p>
+}
+
+    <div class="explore-layout">
+      <section id="map-section" class="map-section" aria-labelledby="map-heading">
+        <div class="map-heading">
+          <div>
+            <h2 id="map-heading">Campus map</h2>
+            <p>Tap a number or symbol to explore.</p>
+          </div>
+          <button type="button" class="map-action fit-action"
+            [disabled]="!mapReady()" (click)="resetMap()">
+            Fit campus
+          </button>
+        </div>
+
+        <div id="campus-map" role="region" tabindex="0"
+          aria-label="Sumacab campus map. Use zoom buttons and arrow keys to explore.">
+        </div>
+
+        <div class="location-controls" [attr.aria-busy]="locationStarting()">
+          <div class="location-status">
+            <span class="status-dot"
+              [class.is-active]="locationTracking()" aria-hidden="true"></span>
+            <p role="status">{{ locationMessage() }}</p>
+          </div>
+          @if (locationTracking() || locationStarting()) {
+            <button type="button" class="map-action" (click)="stopLocation()">
+              Stop location
+            </button>
+          } @else {
+            <button type="button" class="map-action primary-action"
+              [disabled]="!mapReady()" (click)="startLocation()">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="7" />
+                <circle cx="12" cy="12" r="2" />
+                <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+              </svg>
+              My location
+            </button>
+          }
+        </div>
+
+        @if (mapError()) {
+          <p class="map-message" role="alert">The campus map could not be loaded.</p>
+        } @else if (!mapReady()) {
+          <p class="map-message" role="status">Loading campus map...</p>
+        }
+
+        <details class="map-notes">
+          <summary>About this map</summary>
+          <p>Blue dot: your GPS position. Shaded area: reported GPS accuracy.
+            The campus image alignment is approximate and adds its own error.</p>
+          <p>Walking routes and entrances have not been verified.
+            Symbol references such as P01 are assigned by NUNO.</p>
+        </details>
+      </section>
+
+      <section class="directory" aria-labelledby="directory-heading">
+        <div class="directory-heading">
+          <div>
+            <h2 id="directory-heading">Campus directory</h2>
+            <p>Buildings &amp; facilities</p>
+          </div>
+          <span class="result-count" role="status">
+            {{ filteredPlaces().length }} places
+          </span>
+        </div>
+
+        <ul class="places">
+          @for (place of filteredPlaces(); track place.id) {
+            <li [id]="'place-' + place.id"
+              [class.is-selected]="selectedPlace()?.id === place.id">
+              <button type="button" class="place-row"
+                [attr.aria-expanded]="selectedPlace()?.id === place.id"
+                [attr.aria-controls]="'details-' + place.id"
+                (click)="selectPlace(place)">
+                <span class="map-number">{{ place.mapLabel }}</span>
+                <span class="place-copy">
+                  <span class="place-name">{{ place.name }}</span>
+                  <span class="place-category">{{ place.category }}</span>
+                </span>
+                <svg class="row-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 5 7 7-7 7" />
+                </svg>
+              </button>
+
+              @if (selectedPlace()?.id === place.id) {
+                <section class="place-details" [id]="'details-' + place.id"
+                  [attr.aria-label]="place.name + ' details'">
+                  <p class="reference-label">
+                    {{ place.mapNumber === null ? 'Symbol reference' : 'Map number' }}
+                    {{ place.mapLabel }}
+                  </p>
+                  <button type="button" class="map-action primary-action"
+                    [disabled]="!mapReady()" (click)="focusMap()">
+                    Show on map
+                  </button>
+                  <details class="coordinate-details">
+                    <summary>Location details</summary>
+                    <p>Latitude: {{ place.latitude }}</p>
+                    <p>Longitude: {{ place.longitude }}</p>
+                    <p>Source: {{ place.source }}</p>
+                    <p>Approximate position; entrance not verified.</p>
+                  </details>
+                </section>
+              }
+            </li>
+          } @empty {
+            <li class="empty">
+              <h3>No places found</h3>
+              <p>Try a building name, facility, or map number.</p>
+            </li>
+          }
+        </ul>
+      </section>
+    </div>
+  </main>
+</ion-content>

@@ -1,0 +1,7 @@
+{
+  "name": "nuno",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular-standalone"
+}

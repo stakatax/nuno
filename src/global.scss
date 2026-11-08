@@ -1,0 +1,86 @@
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/**
+ * Ionic Dark Mode
+ * -----------------------------------------------------
+ * For more info, please see:
+ * https://ionicframework.com/docs/theming/dark-mode
+ */
+
+/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+/* @import "@ionic/angular/css/palettes/dark.class.css"; */
+@import '@ionic/angular/css/palettes/dark.system.css';
+
+
+@import 'leaflet/dist/leaflet.css';
+
+#campus-map .leaflet-control-zoom a {
+  width: 48px;
+  height: 48px;
+  line-height: 48px;
+}
+
+#campus-map .nuno-map-hotspot:hover,
+#campus-map .nuno-map-hotspot:focus-visible {
+  fill-opacity: 0.2;
+  stroke: #ffe1a1;
+  stroke-opacity: 1;
+  stroke-width: 2px;
+}
+
+#campus-map .nuno-popup-action {
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid #285443;
+  border-radius: 8px;
+  background: #285443;
+  color: #fffdf8;
+  font: inherit;
+  cursor: pointer;
+}
+
+#campus-map .nuno-popup-action:focus-visible {
+  outline: 2px solid #285443;
+  outline-offset: 3px;
+}
+
+.nuno-profile-alert {
+  --background: #fffdf8;
+  --ion-text-color: #202e27;
+  --ion-color-primary: #285443;
+  --ion-color-primary-rgb: 40, 84, 67;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nuno-profile-alert {
+    --background: #1e2a22;
+    --ion-text-color: #edf2e9;
+    --ion-color-primary: #b9d5b4;
+    --ion-color-primary-rgb: 185, 213, 180;
+  }
+}
