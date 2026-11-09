@@ -665,14 +665,19 @@ async testVibration() {
     await Haptics.vibrate({ duration: 250 });
 
     this.hapticsMessage.set(
-      'Vibration requested. If nothing happened, check your phone’s vibration settings.'
+      'Touch-feedback request sent.'
     );
   } catch (error) {
     console.error('Vibration test failed:', error);
 
-    this.hapticsMessage.set(
-      'Could not start vibration. Try again after restarting the app.'
-    );
+    const message =
+      typeof error === 'object' &&
+      error !== null &&
+      'message' in error
+        ? String(error.message)
+        : 'Unknown native vibration error.';
+
+    this.hapticsMessage.set(message);
   } finally {
     this.hapticsTesting.set(false);
   }
