@@ -2,7 +2,7 @@ import { Component, computed, signal, OnDestroy, inject,} from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Subscription, timeout } from 'rxjs';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Haptics } from '@capacitor/haptics';
 import * as L from 'leaflet';
 import { campusPlaces, type CampusPlace } from './campus-places';
 import { Capacitor } from '@capacitor/core';
@@ -59,6 +59,19 @@ imports: [
 })
 
 export class HomePage implements OnDestroy {
+  activeView = signal<'map' | 'directory'>('map');
+settingsOpen = signal(false);
+
+setActiveView(view: 'map' | 'directory') {
+  this.activeView.set(view);
+
+  if (view === 'map') {
+    requestAnimationFrame(() => {
+      this.campusMap?.invalidateSize();
+      this.placeMarker?.getPopup()?.update();
+    });
+  }
+}
   appName = 'NUNO';
   campus = 'NEUST Sumacab';
 
@@ -79,6 +92,9 @@ studentMessage = signal('');
 storageMessage = signal('');
 canRegister = signal(false);
 hapticsEnabled = signal(false);
+
+hapticsMessage = signal('');
+hapticsTesting = signal(false);
 
 studentNo = '';
 fullName = '';
@@ -286,10 +302,11 @@ const details =
     this.placeMarker.openPopup();
   }
 
-  focusPlace(place: CampusPlace) {
-    const row = document.getElementById(
-      `place-${place.id}`
-    );
+focusPlace(place: CampusPlace) {
+  this.setActiveView('directory');
+
+  requestAnimationFrame(() => {
+    const row = document.getElementById(`place-${place.id}`);
 
     row?.scrollIntoView({
       block: 'center',
@@ -299,7 +316,8 @@ const details =
     row?.querySelector('button')?.focus({
       preventScroll: true,
     });
-  }
+  });
+}
 
   async startLocation() {
   if (
@@ -466,16 +484,18 @@ checkStudent(verifyCreated = false) {
             normalize(this.studentNo)
           );
 
-          if (!existing) {
-            this.canRegister.set(!verifyCreated);
+if (!existing) {
+  if (verifyCreated) {
+    this.studentMessage.set(
+      'Could not confirm the new record. Save again to check before retrying.'
+    );
+    return;
+  }
 
-            this.studentMessage.set(
-              verifyCreated
-                ? 'Registration was not confirmed. Check your details before retrying.'
-                : 'No record found. Choose Create profile to register these details.'
-            );
-            return;
-          }
+  this.canRegister.set(true);
+  this.postStudent();
+  return;
+}
 
           if (
             normalize(existing.full_name) !==
@@ -486,7 +506,7 @@ checkStudent(verifyCreated = false) {
               Number(this.yearLevel)
           ) {
             this.studentMessage.set(
-              'The details do not match this ID number. Check your name, course and year.'
+              'This student number already has different details. Check your number, name, course and year.'
             );
             return;
           }
@@ -610,6 +630,7 @@ restoreStudent() {
 
 setHaptics(enabled: boolean) {
   this.hapticsEnabled.set(enabled);
+  this.hapticsMessage.set('');
 
   try {
     localStorage.setItem('nuno-haptics', String(enabled));
@@ -619,7 +640,42 @@ setHaptics(enabled: boolean) {
     );
   }
 
-  if (enabled) void this.selectionHaptic();
+  if (enabled) void this.testVibration();
+}
+
+async testVibration() {
+  if (this.hapticsTesting()) return;
+
+  if (!this.hapticsEnabled()) {
+    this.hapticsMessage.set('Turn on vibration first.');
+    return;
+  }
+
+  if (!Capacitor.isNativePlatform()) {
+    this.hapticsMessage.set(
+      'Test vibration in the installed Android app.'
+    );
+    return;
+  }
+
+  this.hapticsTesting.set(true);
+  this.hapticsMessage.set('');
+
+  try {
+    await Haptics.vibrate({ duration: 250 });
+
+    this.hapticsMessage.set(
+      'Vibration requested. If nothing happened, check your phone’s vibration settings.'
+    );
+  } catch (error) {
+    console.error('Vibration test failed:', error);
+
+    this.hapticsMessage.set(
+      'Could not start vibration. Try again after restarting the app.'
+    );
+  } finally {
+    this.hapticsTesting.set(false);
+  }
 }
 
 async selectionHaptic() {
@@ -629,11 +685,13 @@ async selectionHaptic() {
   ) return;
 
   try {
-    await Haptics.impact({
-      style: ImpactStyle.Light,
-    });
-  } catch {
-    // Vibration is optional; selection must still work.
+    await Haptics.vibrate({ duration: 80 });
+  } catch (error) {
+    console.error('Selection vibration failed:', error);
+
+    this.hapticsMessage.set(
+      'Vibration could not start. You can still use the map.'
+    );
   }
 }
 
@@ -838,7 +896,13 @@ ionViewWillLeave() {
     });
   }
 
-  focusMap() {
+focusMap() {
+  this.setActiveView('map');
+
+  requestAnimationFrame(() => {
+    this.campusMap?.invalidateSize();
+    this.placeMarker?.getPopup()?.update();
+
     document.getElementById('map-section')?.scrollIntoView({
       block: 'start',
       behavior: 'instant',
@@ -847,7 +911,8 @@ ionViewWillLeave() {
     document.getElementById('campus-map')?.focus({
       preventScroll: true,
     });
-  }
+  });
+}
 
 ngOnDestroy() {
   this.studentRequests.unsubscribe();

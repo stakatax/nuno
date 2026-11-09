@@ -1,6 +1,8 @@
 name: Build NUNO APK
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -48,6 +50,14 @@ jobs:
           if [ ! -d android ]; then
             npx cap add android
           fi
+
+      - name: Generate NUNO app icons
+        run: >
+          npx @capacitor/assets generate --android
+          --iconBackgroundColor "#4D8B59"
+          --iconBackgroundColorDark "#4D8B59"
+          --splashBackgroundColor "#F5F5EE"
+          --splashBackgroundColorDark "#101D16"
 
       - name: Add location and vibration permissions
         run: |

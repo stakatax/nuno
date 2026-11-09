@@ -2,263 +2,384 @@
   <ion-toolbar>
     <div class="app-bar">
       <div class="brand">
-        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-          <circle cx="16" cy="16" r="13" />
-          <path d="M21 9 18 18 9 23 14 14Z" />
-        </svg>
+        <img
+          src="assets/nuno-icon.png"
+          width="44"
+          height="44"
+          alt=""
+        />
+
         <div>
-          <ion-title class="brand-name">{{ appName }}</ion-title>
-          <span class="brand-campus">{{ campus }}</span>
+          <ion-title>{{ appName }}</ion-title>
+          <span>{{ campus }}</span>
         </div>
       </div>
-      <span class="offline-label">Offline map</span>
+
+      <button
+        type="button"
+        class="icon-button"
+        aria-label="Settings"
+        [attr.aria-expanded]="settingsOpen()"
+        (click)="settingsOpen.set(!settingsOpen())"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 7h16M4 17h16" />
+          <circle cx="9" cy="7" r="2.5" />
+          <circle cx="15" cy="17" r="2.5" />
+        </svg>
+      </button>
     </div>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
   <main class="page">
-    <section class="search-area" aria-labelledby="place-search-label">
-      <h1 id="place-search-label">Where are you headed?</h1>
-      <ion-searchbar
-        aria-labelledby="place-search-label"
-        placeholder="Building, facility, or map number"
-        showClearButton="always"
-        [value]="searchText()"
-        [debounce]="150"
-        (ionInput)="searchPlaces($event.detail.value)"
-      ></ion-searchbar>
-    </section>
+    <div class="intro">
+      <h1>Find your way.</h1>
+      <span class="offline-label">Offline campus map</span>
+    </div>
 
-    <div class="student-bar">
-  <p>{{ student()?.full_name || 'Explore as a guest' }}</p>
+    <ion-searchbar
+      aria-label="Search campus locations"
+      placeholder="Building, facility, or map number"
+      showClearButton="always"
+      [value]="searchText()"
+      [debounce]="150"
+      (ionInput)="searchPlaces($event.detail.value)"
+    ></ion-searchbar>
 
-  <button
-    type="button"
-    class="map-action"
-    (click)="openStudentForm()"
-  >
-    Student profile
-  </button>
-</div>
+    @if (settingsOpen()) {
+      <section
+        class="utility-panel"
+        aria-labelledby="settings-heading"
+      >
+        <div class="panel-heading">
+          <h2 id="settings-heading">Settings</h2>
 
-<label class="haptics-setting">
-  <input
-    #vibration
-    type="checkbox"
-    [checked]="hapticsEnabled()"
-    (change)="setHaptics(vibration.checked)"
-  />
-  Vibrate when selecting a place
-</label>
-
-@if (showStudentForm()) {
-  <section
-    id="student-form"
-    class="student-form"
-    tabindex="-1"
-    aria-labelledby="student-heading"
-  >
-    <h2 id="student-heading">Set up your student profile</h2>
-
-    <p>
-      We check your ID, name, course and year
-      against the class directory.
-    </p>
-
-    <form
-      (ngSubmit)="checkStudent()"
-      [attr.aria-busy]="studentBusy()"
-    >
-      <div class="student-fields">
-        <ion-input
-          label="Full name"
-          labelPlacement="stacked"
-          fill="outline"
-          name="fullName"
-          [(ngModel)]="fullName"
-          maxlength="100"
-          [disabled]="studentBusy()"
-          (ngModelChange)="studentDetailsChanged()"
-        ></ion-input>
-
-        <ion-input
-          label="Course"
-          labelPlacement="stacked"
-          fill="outline"
-          name="course"
-          [(ngModel)]="course"
-          maxlength="60"
-          [disabled]="studentBusy()"
-          (ngModelChange)="studentDetailsChanged()"
-        ></ion-input>
-
-        <ion-select
-          label="Year level"
-          labelPlacement="stacked"
-          fill="outline"
-          placeholder="Choose year"
-          name="yearLevel"
-          [(ngModel)]="yearLevel"
-          [disabled]="studentBusy()"
-          (ngModelChange)="studentDetailsChanged()"
-        >
-          <ion-select-option [value]="1">
-            1st year
-          </ion-select-option>
-          <ion-select-option [value]="2">
-            2nd year
-          </ion-select-option>
-          <ion-select-option [value]="3">
-            3rd year
-          </ion-select-option>
-          <ion-select-option [value]="4">
-            4th year
-          </ion-select-option>
-          <ion-select-option [value]="5">
-            5th year
-          </ion-select-option>
-          <ion-select-option [value]="6">
-            6th year
-          </ion-select-option>
-        </ion-select>
-
-        <ion-input
-          label="Section"
-          labelPlacement="stacked"
-          fill="outline"
-          name="section"
-          [(ngModel)]="section"
-          maxlength="20"
-          [disabled]="studentBusy()"
-          (ngModelChange)="studentDetailsChanged()"
-        ></ion-input>
-
-        <ion-input
-          label="Student ID number"
-          labelPlacement="stacked"
-          fill="outline"
-          name="studentNo"
-          [(ngModel)]="studentNo"
-          maxlength="30"
-          [disabled]="studentBusy()"
-          (ngModelChange)="studentDetailsChanged()"
-        ></ion-input>
-      </div>
-
-      <p>
-        Section stays on this device because the API
-        has no section field. This is a shared student
-        directory, not a secure login. GPS is never sent to it.
-      </p>
-
-      <p role="status">{{ studentMessage() }}</p>
-
-      <div class="student-actions">
-        @if (canRegister()) {
           <button
             type="button"
-            class="map-action primary-action"
-            [disabled]="studentBusy()"
-            (click)="postStudent()"
+            class="text-button"
+            (click)="settingsOpen.set(false)"
           >
-            Create profile
+            Done
           </button>
-        } @else {
+        </div>
+
+        <div class="profile-summary">
+          <div>
+            <strong>
+              {{ student()?.full_name || 'Exploring as a guest' }}
+            </strong>
+
+            <p>
+              {{ student()
+                ? 'Your profile is saved on this device.'
+                : 'Add a student profile to use My location.' }}
+            </p>
+          </div>
+
           <button
-            type="submit"
-            class="map-action primary-action"
+            type="button"
+            class="secondary-button"
             [disabled]="studentBusy()"
+            (click)="settingsOpen.set(false); openStudentForm()"
           >
-            {{ studentBusy() ? 'Checking...' : 'Check details' }}
+            Profile
           </button>
-        }
+        </div>
+
+        <label class="vibration-option">
+          <span>
+            <strong>Selection vibration</strong>
+            <small>A short cue when you choose a place.</small>
+          </span>
+
+          <input
+            #vibration
+            type="checkbox"
+            [checked]="hapticsEnabled()"
+            (change)="setHaptics(vibration.checked)"
+          />
+        </label>
 
         <button
           type="button"
-          class="map-action"
-          (click)="closeStudentForm()"
+          class="secondary-button"
+          [disabled]="!hapticsEnabled() || hapticsTesting()"
+          (click)="testVibration()"
         >
-          Not now
+          {{ hapticsTesting() ? 'Testing...' : 'Test vibration' }}
         </button>
-      </div>
-    </form>
-  </section>
-}
 
-@if (!showStudentForm() && studentMessage()) {
-  <p class="student-feedback" role="status">
-    {{ studentMessage() }}
-  </p>
-}
+        <p class="feedback" role="status">
+          {{ hapticsMessage() }}
+        </p>
+      </section>
+    }
 
-@if (storageMessage()) {
-  <p class="student-feedback" role="status">
-    {{ storageMessage() }}
-  </p>
-}
+    @if (showStudentForm()) {
+      <section
+        id="student-form"
+        class="utility-panel"
+        tabindex="-1"
+        aria-labelledby="student-heading"
+      >
+        <div class="panel-heading">
+          <h2 id="student-heading">Your student profile</h2>
+        </div>
 
-    <div class="explore-layout">
-      <section id="map-section" class="map-section" aria-labelledby="map-heading">
-        <div class="map-heading">
+        <p class="muted">
+          Add your student details to use My location.
+        </p>
+
+        <form
+          (ngSubmit)="checkStudent()"
+          [attr.aria-busy]="studentBusy()"
+        >
+          <div class="student-fields">
+            <ion-input
+              label="Full name"
+              labelPlacement="stacked"
+              fill="outline"
+              name="fullName"
+              [(ngModel)]="fullName"
+              maxlength="100"
+              [disabled]="studentBusy()"
+              (ngModelChange)="studentDetailsChanged()"
+            ></ion-input>
+
+            <ion-input
+              label="Student number"
+              labelPlacement="stacked"
+              fill="outline"
+              name="studentNo"
+              [(ngModel)]="studentNo"
+              maxlength="30"
+              [disabled]="studentBusy()"
+              (ngModelChange)="studentDetailsChanged()"
+            ></ion-input>
+
+            <ion-input
+              label="Course"
+              labelPlacement="stacked"
+              fill="outline"
+              name="course"
+              [(ngModel)]="course"
+              maxlength="60"
+              [disabled]="studentBusy()"
+              (ngModelChange)="studentDetailsChanged()"
+            ></ion-input>
+
+            <ion-select
+              label="Year level"
+              labelPlacement="stacked"
+              fill="outline"
+              placeholder="Choose year"
+              name="yearLevel"
+              [(ngModel)]="yearLevel"
+              [disabled]="studentBusy()"
+              (ngModelChange)="studentDetailsChanged()"
+            >
+              <ion-select-option [value]="1">
+                1st year
+              </ion-select-option>
+
+              <ion-select-option [value]="2">
+                2nd year
+              </ion-select-option>
+
+              <ion-select-option [value]="3">
+                3rd year
+              </ion-select-option>
+
+              <ion-select-option [value]="4">
+                4th year
+              </ion-select-option>
+
+              <ion-select-option [value]="5">
+                5th year
+              </ion-select-option>
+
+              <ion-select-option [value]="6">
+                6th year
+              </ion-select-option>
+            </ion-select>
+
+            <ion-input
+              label="Section"
+              labelPlacement="stacked"
+              fill="outline"
+              name="section"
+              [(ngModel)]="section"
+              maxlength="20"
+              [disabled]="studentBusy()"
+              (ngModelChange)="studentDetailsChanged()"
+            ></ion-input>
+          </div>
+
+          <p class="form-note">
+            Your name, student number, course and year are saved
+            in the shared class directory. Section stays on this
+            device. This profile is not secure login. Your location
+            is never uploaded.
+          </p>
+
+          <p class="feedback" role="status">
+            {{ studentMessage() }}
+          </p>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="primary-button"
+              [disabled]="studentBusy()"
+            >
+              {{ studentBusy() ? 'Saving...' : 'Save profile' }}
+            </button>
+
+            <button
+              type="button"
+              class="secondary-button"
+              [disabled]="studentBusy()"
+              (click)="closeStudentForm()"
+            >
+              Not now
+            </button>
+          </div>
+        </form>
+      </section>
+    }
+
+    @if (!showStudentForm() && studentMessage()) {
+      <p class="feedback" role="status">
+        {{ studentMessage() }}
+      </p>
+    }
+
+    @if (storageMessage()) {
+      <p class="feedback" role="status">
+        {{ storageMessage() }}
+      </p>
+    }
+
+    <div
+      class="view-switch"
+      role="group"
+      aria-label="Campus view"
+    >
+      <button
+        type="button"
+        [attr.aria-pressed]="activeView() === 'map'"
+        (click)="setActiveView('map')"
+      >
+        Map
+      </button>
+
+      <button
+        type="button"
+        [attr.aria-pressed]="activeView() === 'directory'"
+        (click)="setActiveView('directory')"
+      >
+        Directory · {{ filteredPlaces().length }}
+      </button>
+    </div>
+
+    <div class="workspace">
+      <section
+        id="map-section"
+        class="map-panel"
+        [class.is-hidden]="activeView() !== 'map'"
+        aria-labelledby="map-heading"
+      >
+        <div class="panel-heading">
           <div>
             <h2 id="map-heading">Campus map</h2>
-            <p>Tap a number or symbol to explore.</p>
+            <p class="muted">Tap a number or symbol.</p>
           </div>
-          <button type="button" class="map-action fit-action"
-            [disabled]="!mapReady()" (click)="resetMap()">
-            Fit campus
-          </button>
-        </div>
 
-        <div id="campus-map" role="region" tabindex="0"
-          aria-label="Sumacab campus map. Use zoom buttons and arrow keys to explore.">
-        </div>
-
-        <div class="location-controls" [attr.aria-busy]="locationStarting()">
-          <div class="location-status">
-            <span class="status-dot"
-              [class.is-active]="locationTracking()" aria-hidden="true"></span>
-            <p role="status">{{ locationMessage() }}</p>
-          </div>
           @if (locationTracking() || locationStarting()) {
-            <button type="button" class="map-action" (click)="stopLocation()">
+            <button
+              type="button"
+              class="secondary-button"
+              (click)="stopLocation()"
+            >
               Stop location
             </button>
           } @else {
-            <button type="button" class="map-action primary-action"
-              [disabled]="!mapReady()" (click)="startLocation()">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="7" />
-                <circle cx="12" cy="12" r="2" />
-                <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
-              </svg>
+            <button
+              type="button"
+              class="primary-button"
+              [disabled]="!mapReady()"
+              (click)="startLocation()"
+            >
               My location
             </button>
           }
         </div>
 
+        <div
+          id="campus-map"
+          role="region"
+          tabindex="0"
+          aria-label="Sumacab campus map. Use zoom buttons and arrow keys to explore."
+        ></div>
+
+        <div class="map-footer">
+          <p class="location-status" role="status">
+            <span
+              class="status-dot"
+              [class.is-active]="locationTracking()"
+              aria-hidden="true"
+            ></span>
+            {{ locationMessage() }}
+          </p>
+
+          <button
+            type="button"
+            class="text-button"
+            [disabled]="!mapReady()"
+            (click)="resetMap()"
+          >
+            Fit campus
+          </button>
+        </div>
+
         @if (mapError()) {
-          <p class="map-message" role="alert">The campus map could not be loaded.</p>
+          <p class="map-message" role="alert">
+            The campus map could not be loaded.
+          </p>
         } @else if (!mapReady()) {
-          <p class="map-message" role="status">Loading campus map...</p>
+          <p class="map-message" role="status">
+            Loading campus map...
+          </p>
         }
 
         <details class="map-notes">
           <summary>About this map</summary>
-          <p>Blue dot: your GPS position. Shaded area: reported GPS accuracy.
-            The campus image alignment is approximate and adds its own error.</p>
-          <p>Walking routes and entrances have not been verified.
-            Symbol references such as P01 are assigned by NUNO.</p>
+
+          <p>
+            Blue dot: your GPS position. Shaded area: reported
+            GPS accuracy. Campus image alignment is approximate.
+            Walking routes and entrances have not been verified.
+          </p>
+
+          <p>
+            Symbol labels such as P01 are NUNO references.
+          </p>
         </details>
       </section>
 
-      <section class="directory" aria-labelledby="directory-heading">
-        <div class="directory-heading">
+      <section
+        class="directory-panel"
+        [class.is-hidden]="activeView() !== 'directory'"
+        aria-labelledby="directory-heading"
+      >
+        <div class="panel-heading">
           <div>
             <h2 id="directory-heading">Campus directory</h2>
-            <p>Buildings &amp; facilities</p>
+            <p class="muted">Buildings and facilities</p>
           </div>
+
           <span class="result-count" role="status">
             {{ filteredPlaces().length }} places
           </span>
@@ -266,39 +387,55 @@
 
         <ul class="places">
           @for (place of filteredPlaces(); track place.id) {
-            <li [id]="'place-' + place.id"
-              [class.is-selected]="selectedPlace()?.id === place.id">
-              <button type="button" class="place-row"
+            <li
+              [id]="'place-' + place.id"
+              [class.is-selected]="selectedPlace()?.id === place.id"
+            >
+              <button
+                type="button"
+                class="place-row"
                 [attr.aria-expanded]="selectedPlace()?.id === place.id"
                 [attr.aria-controls]="'details-' + place.id"
-                (click)="selectPlace(place)">
-                <span class="map-number">{{ place.mapLabel }}</span>
-                <span class="place-copy">
-                  <span class="place-name">{{ place.name }}</span>
-                  <span class="place-category">{{ place.category }}</span>
+                (click)="selectPlace(place)"
+              >
+                <span class="place-number">
+                  {{ place.mapLabel }}
                 </span>
-                <svg class="row-chevron" viewBox="0 0 24 24" aria-hidden="true">
+
+                <span class="place-copy">
+                  <strong>{{ place.name }}</strong>
+                  <span>{{ place.category }}</span>
+                </span>
+
+                <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="m9 5 7 7-7 7" />
                 </svg>
               </button>
 
               @if (selectedPlace()?.id === place.id) {
-                <section class="place-details" [id]="'details-' + place.id"
-                  [attr.aria-label]="place.name + ' details'">
-                  <p class="reference-label">
-                    {{ place.mapNumber === null ? 'Symbol reference' : 'Map number' }}
-                    {{ place.mapLabel }}
-                  </p>
-                  <button type="button" class="map-action primary-action"
-                    [disabled]="!mapReady()" (click)="focusMap()">
+                <section
+                  class="place-details"
+                  [id]="'details-' + place.id"
+                  [attr.aria-label]="place.name + ' details'"
+                >
+                  <button
+                    type="button"
+                    class="secondary-button"
+                    [disabled]="!mapReady()"
+                    (click)="focusMap()"
+                  >
                     Show on map
                   </button>
-                  <details class="coordinate-details">
-                    <summary>Location details</summary>
-                    <p>Latitude: {{ place.latitude }}</p>
-                    <p>Longitude: {{ place.longitude }}</p>
-                    <p>Source: {{ place.source }}</p>
-                    <p>Approximate position; entrance not verified.</p>
+
+                  <details>
+                    <summary>Location reference</summary>
+                    <p>
+                      {{ place.latitude }}, {{ place.longitude }}
+                    </p>
+                    <p>
+                      {{ place.source }}.
+                      Approximate position; entrance not verified.
+                    </p>
                   </details>
                 </section>
               }
@@ -306,7 +443,9 @@
           } @empty {
             <li class="empty">
               <h3>No places found</h3>
-              <p>Try a building name, facility, or map number.</p>
+              <p>
+                Try another building, facility, or map number.
+              </p>
             </li>
           }
         </ul>
